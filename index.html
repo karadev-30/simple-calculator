@@ -3,409 +3,661 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calculator</title>
+  <title>Cat Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #1c1c1e;
+      background: #0c0a18;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    }
-
-    .calculator {
-      width: 320px;
-      border-radius: 24px;
+      min-height: 100dvh;
+      font-family: 'DM Sans', sans-serif;
       overflow: hidden;
-      background: #1c1c1e;
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
     }
 
-    /* Cat mascot */
-    .cat-area {
-      text-align: center;
-      padding: 18px 16px 4px;
-      font-size: 48px;
-      line-height: 1;
-      transition: transform 0.15s ease;
+    /* Ambient blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob-1 { width: 420px; height: 420px; background: rgba(255,110,0,0.11); top: -120px; right: -120px; }
+    .blob-2 { width: 360px; height: 360px; background: rgba(90,30,200,0.14); bottom: -90px; left: -90px; }
+    .blob-3 { width: 220px; height: 220px; background: rgba(255,60,120,0.07); top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+    /* Calculator card */
+    .calculator {
+      position: relative;
+      z-index: 1;
+      width: 340px;
+      background: #13102a;
+      border-radius: 36px;
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow:
+        0 40px 120px rgba(0,0,0,0.85),
+        inset 0 0 0 1px rgba(255,255,255,0.03);
+      overflow: hidden;
+      padding-bottom: 10px;
+    }
+
+    /* ── Cat ── */
+    .cat-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 18px 16px 0;
+      height: 116px;
       user-select: none;
     }
 
-    .cat-area.shake {
-      animation: shake 0.35s ease;
+    .cat-svg {
+      width: 100px;
+      height: 100px;
+      transform-origin: center bottom;
+    }
+    .cat-svg.idle   { animation: catBreath 3.2s ease-in-out infinite; }
+    .cat-svg.bounce { animation: catBounce 0.38s cubic-bezier(0.34,1.56,0.64,1); }
+    .cat-svg.shake  { animation: catShake 0.42s ease; }
+    .cat-svg.jump   { animation: catJump 0.52s cubic-bezier(0.34,1.56,0.64,1); }
+
+    @keyframes catBreath {
+      0%,100% { transform: scaleY(1) scaleX(1); }
+      50%     { transform: scaleY(1.025) scaleX(0.988); }
+    }
+    @keyframes catBounce {
+      0%   { transform: scaleY(1) scaleX(1); }
+      28%  { transform: scaleY(0.82) scaleX(1.12); }
+      60%  { transform: scaleY(1.12) scaleX(0.93); }
+      80%  { transform: scaleY(0.96) scaleX(1.03); }
+      100% { transform: scaleY(1) scaleX(1); }
+    }
+    @keyframes catShake {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      15%     { transform: translateX(-9px) rotate(-6deg); }
+      30%     { transform: translateX(9px) rotate(6deg); }
+      50%     { transform: translateX(-6px) rotate(-3deg); }
+      70%     { transform: translateX(6px) rotate(3deg); }
+      85%     { transform: translateX(-2px) rotate(-1deg); }
+    }
+    @keyframes catJump {
+      0%   { transform: translateY(0) scaleY(1); }
+      30%  { transform: translateY(-20px) scaleY(1.06); }
+      55%  { transform: translateY(-24px) scaleY(1.09) scaleX(0.96); }
+      72%  { transform: translateY(5px) scaleY(0.88) scaleX(1.1); }
+      86%  { transform: translateY(-6px) scaleY(1.04); }
+      100% { transform: translateY(0) scaleY(1) scaleX(1); }
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-6px) rotate(-4deg); }
-      40%       { transform: translateX(6px) rotate(4deg); }
-      60%       { transform: translateX(-4px) rotate(-2deg); }
-      80%       { transform: translateX(4px) rotate(2deg); }
+    /* SVG eye blink for happy state */
+    .eye-l, .eye-r {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .cat-svg.idle .eye-l { animation: eyeBlink 5s ease-in-out infinite; }
+    .cat-svg.idle .eye-r { animation: eyeBlink 5s ease-in-out infinite 0.06s; }
+    @keyframes eyeBlink {
+      0%,88%,100% { transform: scaleY(1); }
+      92%         { transform: scaleY(0.08); }
     }
 
-    /* Display */
+    /* ── Display ── */
     .display {
-      padding: 8px 20px 12px;
+      padding: 6px 22px 14px;
       text-align: right;
-      min-height: 90px;
+      min-height: 86px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
     }
-
     .expression {
-      font-size: 15px;
-      color: #636366;
-      min-height: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: rgba(180,160,230,0.45);
+      min-height: 18px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       direction: rtl;
       margin-bottom: 2px;
     }
-
     .current {
-      font-size: 52px;
-      font-weight: 300;
-      color: #ffffff;
-      line-height: 1.1;
+      font-family: 'Nunito', sans-serif;
+      font-size: 56px;
+      font-weight: 800;
+      color: #f4f0ff;
+      line-height: 1.08;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       direction: rtl;
-      transition: font-size 0.1s ease;
+      transition: font-size 0.12s ease;
+      letter-spacing: -1.5px;
     }
+    .current.small  { font-size: 40px; letter-spacing: -0.5px; }
+    .current.xsmall { font-size: 28px; letter-spacing: 0; }
+    .display.error .current { color: #ff5555; }
 
-    .current.small { font-size: 36px; }
-    .current.xsmall { font-size: 26px; }
-
-    /* Buttons */
+    /* ── Buttons ── */
     .buttons {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      padding: 10px 12px 20px;
+      grid-template-columns: repeat(4,1fr);
+      gap: 11px;
+      padding: 4px 14px 16px;
     }
 
     button {
-      height: 68px;
+      height: 72px;
       border: none;
-      border-radius: 50%;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
       font-size: 22px;
-      font-weight: 400;
+      font-weight: 500;
       cursor: pointer;
-      transition: filter 0.1s ease, transform 0.08s ease;
       outline: none;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: filter 0.1s ease;
+      position: relative;
     }
 
-    button:active {
-      filter: brightness(1.35);
-      transform: scale(0.94);
-    }
-
-    /* Function buttons (AC, +/-, %) */
-    .btn-fn {
-      background: #2c2c2e;
-      color: #ffffff;
-    }
-
-    /* Digit buttons */
+    /* Digit */
     .btn-digit {
-      background: #3a3a3c;
-      color: #ffffff;
+      background: linear-gradient(180deg, #252044 0%, #1c1a38 100%);
+      color: #f0ecff;
+      box-shadow:
+        0 5px 0 #0e0c20,
+        0 9px 26px rgba(0,0,0,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.09);
+    }
+    .btn-digit:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 1px 0 #0e0c20,
+        0 3px 10px rgba(0,0,0,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.09);
     }
 
-    /* Operator buttons */
+    /* Function */
+    .btn-fn {
+      background: linear-gradient(180deg, #302b58 0%, #272250 100%);
+      color: #cac2f4;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow:
+        0 5px 0 #130f30,
+        0 9px 26px rgba(0,0,0,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.11);
+    }
+    .btn-fn:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 1px 0 #130f30,
+        0 3px 10px rgba(0,0,0,0.48),
+        inset 0 1px 0 rgba(255,255,255,0.11);
+    }
+
+    /* Operator */
     .btn-op {
-      background: #ff9f0a;
-      color: #ffffff;
-      font-weight: 500;
+      background: linear-gradient(180deg, #ffab25 0%, #ff8800 100%);
+      color: #fff;
+      font-size: 26px;
+      font-weight: 700;
+      box-shadow:
+        0 5px 0 #b85f00,
+        0 9px 30px rgba(255,134,0,0.52),
+        inset 0 1px 0 rgba(255,255,255,0.32);
     }
-
+    .btn-op:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 1px 0 #b85f00,
+        0 4px 14px rgba(255,134,0,0.38),
+        inset 0 1px 0 rgba(255,255,255,0.32);
+    }
     .btn-op.active-op {
-      background: #ffffff;
-      color: #ff9f0a;
+      background: linear-gradient(180deg, #fff5e0 0%, #ffeabf 100%);
+      color: #e07800;
+      box-shadow:
+        0 5px 0 #c8a060,
+        0 9px 26px rgba(255,200,80,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.85);
     }
 
-    /* Zero button spans 2 columns */
+    /* Equals */
+    .btn-equals {
+      background: linear-gradient(180deg, #ffab25 0%, #ff8800 100%);
+      color: #fff;
+      font-size: 28px;
+      font-weight: 700;
+      box-shadow:
+        0 5px 0 #b85f00,
+        0 9px 30px rgba(255,134,0,0.52),
+        inset 0 1px 0 rgba(255,255,255,0.32);
+    }
+    .btn-equals:active {
+      transform: translateY(4px);
+      box-shadow:
+        0 1px 0 #b85f00,
+        0 4px 14px rgba(255,134,0,0.38),
+        inset 0 1px 0 rgba(255,255,255,0.32);
+    }
+
+    /* Zero pill */
     .btn-zero {
-      border-radius: 34px;
+      border-radius: 36px;
       grid-column: span 2;
       text-align: left;
-      padding-left: 26px;
+      padding-left: 28px;
     }
 
-    /* Equals button */
-    .btn-equals {
-      background: #ff9f0a;
-      color: #ffffff;
-      font-weight: 500;
+    @media (hover: hover) {
+      .btn-digit:hover { filter: brightness(1.13); }
+      .btn-fn:hover    { filter: brightness(1.13); }
+      .btn-op:hover    { filter: brightness(1.07); }
+      .btn-equals:hover{ filter: brightness(1.07); }
     }
 
-    /* Error flash */
-    .display.error .current {
-      color: #ff453a;
+    @media (prefers-reduced-motion: reduce) {
+      .cat-svg, button { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
 
-<div class="calculator">
-  <div class="cat-area" id="cat">😸</div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
 
+<div class="calculator">
+
+  <!-- SVG Cat -->
+  <div class="cat-container">
+    <svg id="cat" class="cat-svg" viewBox="0 0 100 102" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- ── Static base ── -->
+      <!-- Left ear outer -->
+      <polygon points="16,53 27,12 44,49" fill="#FFE3BA"/>
+      <!-- Left ear inner -->
+      <polygon points="22,49 27,18 39,46" fill="#FFABC8"/>
+      <!-- Right ear outer -->
+      <polygon points="56,49 73,12 84,53" fill="#FFE3BA"/>
+      <!-- Right ear inner -->
+      <polygon points="61,46 73,18 78,49" fill="#FFABC8"/>
+      <!-- Face -->
+      <ellipse cx="50" cy="63" rx="34" ry="32" fill="#FFE3BA"/>
+      <!-- Ear shine -->
+      <circle cx="27" cy="22" r="3" fill="rgba(255,255,255,0.28)"/>
+      <circle cx="73" cy="22" r="3" fill="rgba(255,255,255,0.28)"/>
+      <!-- Nose -->
+      <path d="M47 67 L53 67 L50 71.5 Z" fill="#FF9EB5"/>
+      <circle cx="49" cy="67.5" r="1.1" fill="rgba(255,255,255,0.45)"/>
+      <!-- Whiskers left -->
+      <line x1="6"  y1="64" x2="41" y2="66" stroke="#C49060" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+      <line x1="6"  y1="71" x2="41" y2="70" stroke="#C49060" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+      <!-- Whiskers right -->
+      <line x1="59" y1="66" x2="94" y2="64" stroke="#C49060" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+      <line x1="59" y1="70" x2="94" y2="71" stroke="#C49060" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+      <!-- Collar -->
+      <rect x="19" y="90" width="62" height="9" rx="4.5" fill="#ff8800"/>
+      <rect x="19" y="90" width="62" height="4" rx="4.5" fill="rgba(255,255,255,0.18)"/>
+      <!-- Bell -->
+      <circle cx="50" cy="99" r="4.5" fill="#FFD700" stroke="#C9A000" stroke-width="1"/>
+      <line x1="48" y1="99.5" x2="52" y2="99.5" stroke="#C9A000" stroke-width="1.2" stroke-linecap="round"/>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: happy (default)   -->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-happy">
+        <g class="eye-l">
+          <circle cx="36" cy="56" r="6.5" fill="#2D1A10"/>
+          <circle cx="38.5" cy="53.5" r="2.2" fill="white"/>
+          <circle cx="37"   cy="58"   r="1.2" fill="#3D2510" opacity="0.35"/>
+        </g>
+        <g class="eye-r">
+          <circle cx="64" cy="56" r="6.5" fill="#2D1A10"/>
+          <circle cx="66.5" cy="53.5" r="2.2" fill="white"/>
+          <circle cx="65"   cy="58"   r="1.2" fill="#3D2510" opacity="0.35"/>
+        </g>
+        <!-- Blush -->
+        <ellipse cx="27" cy="71" rx="9.5" ry="5" fill="#FF9EB5" opacity="0.3"/>
+        <ellipse cx="73" cy="71" rx="9.5" ry="5" fill="#FF9EB5" opacity="0.3"/>
+        <!-- Smile -->
+        <path d="M40 75 Q50 83 60 75" stroke="#2D1A10" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: focused (1 op)    -->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-focused" style="display:none">
+        <!-- Squinted leaf eyes -->
+        <path d="M29,56 Q36,50 43,56 Q36,61 29,56 Z" fill="#2D1A10"/>
+        <circle cx="38" cy="55" r="1.6" fill="white" opacity="0.75"/>
+        <path d="M57,56 Q64,50 71,56 Q64,61 57,56 Z" fill="#2D1A10"/>
+        <circle cx="66" cy="55" r="1.6" fill="white" opacity="0.75"/>
+        <!-- Eyebrows – furrowed inward slightly -->
+        <path d="M29,47 Q36,44 43,47" stroke="#8B5E3C" stroke-width="1.9" fill="none" stroke-linecap="round"/>
+        <path d="M57,47 Q64,44 71,47" stroke="#8B5E3C" stroke-width="1.9" fill="none" stroke-linecap="round"/>
+        <!-- Neutral mouth -->
+        <path d="M42 75 Q50 73 58 75" stroke="#2D1A10" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: stressed (2–3 ops)-->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-stressed" style="display:none">
+        <!-- Tall oval worried eyes -->
+        <ellipse cx="36" cy="56" rx="5.5" ry="7.5" fill="#2D1A10"/>
+        <circle cx="38" cy="52.5" r="2.2" fill="white"/>
+        <ellipse cx="64" cy="56" rx="5.5" ry="7.5" fill="#2D1A10"/>
+        <circle cx="66" cy="52.5" r="2.2" fill="white"/>
+        <!-- Worried brows (angled down in center) -->
+        <path d="M29,47 Q36,51 43,47" stroke="#8B5E3C" stroke-width="1.9" fill="none" stroke-linecap="round"/>
+        <path d="M57,47 Q64,51 71,47" stroke="#8B5E3C" stroke-width="1.9" fill="none" stroke-linecap="round"/>
+        <!-- Wavy uncertain mouth -->
+        <path d="M40 76 Q45 73 50 76 Q55 79 60 76" stroke="#2D1A10" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+        <!-- Sweat drop -->
+        <path d="M77,34 Q79.5,26 82,34 A3.8,3.8 0 0,1 77,34 Z" fill="#90CCE8"/>
+      </g>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: panicked (4+ ops) -->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-panicked" style="display:none">
+        <!-- White sclera + big pupils -->
+        <circle cx="36" cy="55" r="10" fill="white" stroke="#2D1A10" stroke-width="1.6"/>
+        <circle cx="36" cy="55" r="5.8" fill="#2D1A10"/>
+        <circle cx="38" cy="52"  r="2"  fill="white"/>
+        <circle cx="64" cy="55" r="10" fill="white" stroke="#2D1A10" stroke-width="1.6"/>
+        <circle cx="64" cy="55" r="5.8" fill="#2D1A10"/>
+        <circle cx="66" cy="52"  r="2"  fill="white"/>
+        <!-- Brows way up high -->
+        <path d="M26,41 Q36,35 46,41" stroke="#8B5E3C" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+        <path d="M54,41 Q64,35 74,41" stroke="#8B5E3C" stroke-width="2.1" fill="none" stroke-linecap="round"/>
+        <!-- Open mouth D-shape -->
+        <path d="M40,75 Q50,88 60,75" fill="#CC5566" stroke="#2D1A10" stroke-width="1.6"/>
+        <path d="M40,75 Q50,76.5 60,75" fill="none" stroke="#2D1A10" stroke-width="1.6"/>
+        <!-- Teeth -->
+        <line x1="46" y1="75.5" x2="46" y2="79" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="50" y1="75.5" x2="50" y2="80" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="54" y1="75.5" x2="54" y2="79" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Sweat drops -->
+        <path d="M76,32 Q78.5,24 81,32 A3.5,3.5 0 0,1 76,32 Z" fill="#90CCE8"/>
+        <path d="M82,44 Q84,38 86,44 A2.8,2.8 0 0,1 82,44 Z" fill="#90CCE8"/>
+        <!-- Stress lines -->
+        <line x1="11" y1="30" x2="20" y2="41" stroke="#FFD700" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+        <line x1="13" y1="22" x2="13" y2="34" stroke="#FFD700" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+        <line x1="7"  y1="26" x2="14" y2="30" stroke="#FFD700" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+      </g>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: relieved (after =)-->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-relieved" style="display:none">
+        <!-- Closed crescent (joy) eyes -->
+        <path d="M28,58 Q36,50 44,58" stroke="#2D1A10" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        <path d="M56,58 Q64,50 72,58" stroke="#2D1A10" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        <!-- Big rosy cheeks -->
+        <ellipse cx="26" cy="71" rx="12.5" ry="6.5" fill="#FF9EB5" opacity="0.42"/>
+        <ellipse cx="74" cy="71" rx="12.5" ry="6.5" fill="#FF9EB5" opacity="0.42"/>
+        <!-- Wide happy grin -->
+        <path d="M37,74 Q50,86 63,74" stroke="#2D1A10" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <!-- Sparkles -->
+        <circle cx="19" cy="50" r="2.2" fill="#FFD700" opacity="0.85"/>
+        <circle cx="81" cy="50" r="2.2" fill="#FFD700" opacity="0.85"/>
+        <circle cx="15" cy="43" r="1.4" fill="#FFD700" opacity="0.6"/>
+        <circle cx="85" cy="43" r="1.4" fill="#FFD700" opacity="0.6"/>
+        <circle cx="22" cy="40" r="1"   fill="#FFD700" opacity="0.5"/>
+        <circle cx="78" cy="40" r="1"   fill="#FFD700" opacity="0.5"/>
+      </g>
+
+      <!-- ══════════════════════════════ -->
+      <!-- EXPRESSION: error             -->
+      <!-- ══════════════════════════════ -->
+      <g id="expr-error" style="display:none">
+        <!-- X eyes -->
+        <line x1="29" y1="49" x2="43" y2="63" stroke="#2D1A10" stroke-width="3.2" stroke-linecap="round"/>
+        <line x1="43" y1="49" x2="29" y2="63" stroke="#2D1A10" stroke-width="3.2" stroke-linecap="round"/>
+        <line x1="57" y1="49" x2="71" y2="63" stroke="#2D1A10" stroke-width="3.2" stroke-linecap="round"/>
+        <line x1="71" y1="49" x2="57" y2="63" stroke="#2D1A10" stroke-width="3.2" stroke-linecap="round"/>
+        <!-- Star daze indicators -->
+        <circle cx="14" cy="46" r="5" fill="#FFD700" opacity="0.9"/>
+        <text x="10.5" y="50" font-size="7" fill="#2D1A10" font-weight="bold">✦</text>
+        <circle cx="86" cy="46" r="5" fill="#FFD700" opacity="0.9"/>
+        <text x="82.5" y="50" font-size="7" fill="#2D1A10" font-weight="bold">✦</text>
+        <!-- Small shocked O mouth -->
+        <ellipse cx="50" cy="79" rx="8.5" ry="5.8" fill="#CC4444" stroke="#2D1A10" stroke-width="1.6"/>
+        <ellipse cx="50" cy="79" rx="4" ry="2.5" fill="#AA2222"/>
+      </g>
+
+    </svg>
+  </div>
+
+  <!-- Display -->
   <div class="display" id="display">
     <div class="expression" id="expression"></div>
     <div class="current" id="current">0</div>
   </div>
 
+  <!-- Buttons -->
   <div class="buttons">
     <!-- Row 1 -->
     <button class="btn-fn"    onclick="handleFn('ac')">AC</button>
     <button class="btn-fn"    onclick="handleFn('sign')">+/−</button>
     <button class="btn-fn"    onclick="handleFn('pct')">%</button>
-    <button class="btn-op"    id="op-div"  onclick="handleOp('/')">÷</button>
-
+    <button class="btn-op"   id="op-div" onclick="handleOp('/')">÷</button>
     <!-- Row 2 -->
     <button class="btn-digit" onclick="handleDigit('7')">7</button>
     <button class="btn-digit" onclick="handleDigit('8')">8</button>
     <button class="btn-digit" onclick="handleDigit('9')">9</button>
-    <button class="btn-op"    id="op-mul"  onclick="handleOp('*')">×</button>
-
+    <button class="btn-op"   id="op-mul" onclick="handleOp('*')">×</button>
     <!-- Row 3 -->
     <button class="btn-digit" onclick="handleDigit('4')">4</button>
     <button class="btn-digit" onclick="handleDigit('5')">5</button>
     <button class="btn-digit" onclick="handleDigit('6')">6</button>
-    <button class="btn-op"    id="op-sub"  onclick="handleOp('-')">−</button>
-
+    <button class="btn-op"   id="op-sub" onclick="handleOp('-')">−</button>
     <!-- Row 4 -->
     <button class="btn-digit" onclick="handleDigit('1')">1</button>
     <button class="btn-digit" onclick="handleDigit('2')">2</button>
     <button class="btn-digit" onclick="handleDigit('3')">3</button>
-    <button class="btn-op"    id="op-add"  onclick="handleOp('+')">+</button>
-
+    <button class="btn-op"   id="op-add" onclick="handleOp('+')">+</button>
     <!-- Row 5 -->
     <button class="btn-digit btn-zero" onclick="handleDigit('0')">0</button>
     <button class="btn-digit" onclick="handleDigit('.')">.</button>
     <button class="btn-equals" onclick="handleEquals()">=</button>
   </div>
+
 </div>
 
 <script>
-  // State
   let currentInput = '0';
-  let expression   = '';      // full expression string shown above display
-  let prevValue    = null;    // stored left-hand value
-  let operator     = null;    // pending operator
-  let justEvaled   = false;   // true right after pressing =
-  let opCount      = 0;       // running count of operators used in session
+  let expression   = '';
+  let prevValue    = null;
+  let operator     = null;
+  let justEvaled   = false;
+  let opCount      = 0;
 
-  const catStates = ['😸', '🐱', '😾', '🙀'];
   const catEl     = document.getElementById('cat');
   const currentEl = document.getElementById('current');
   const exprEl    = document.getElementById('expression');
   const displayEl = document.getElementById('display');
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  const EXPR_IDS = ['expr-happy','expr-focused','expr-stressed','expr-panicked','expr-relieved','expr-error'];
+  let catAnimTimeout   = null;
+  let errorResetTimeout = null;
+
+  function opsToCatState(ops) {
+    if (ops === 0) return 'expr-happy';
+    if (ops === 1) return 'expr-focused';
+    if (ops <= 3)  return 'expr-stressed';
+    return 'expr-panicked';
+  }
+
+  function showExpr(id) {
+    EXPR_IDS.forEach(eid => {
+      document.getElementById(eid).style.display = (eid === id) ? '' : 'none';
+    });
+  }
+
+  function updateCat(ops, forceState) {
+    showExpr(forceState || opsToCatState(ops));
+  }
+
+  function triggerCatAnim(cls, ms) {
+    clearTimeout(catAnimTimeout);
+    catEl.className = 'cat-svg';           // strip all
+    void catEl.offsetWidth;               // reflow
+    catEl.classList.add(cls);
+    catAnimTimeout = setTimeout(() => {
+      catEl.classList.remove(cls);
+      catEl.classList.add('idle');
+    }, ms || 400);
+  }
 
   function setDisplay(val) {
-    currentEl.classList.remove('small', 'xsmall');
-    const str = String(val);
-    if (str.length > 12) currentEl.classList.add('xsmall');
-    else if (str.length > 8) currentEl.classList.add('small');
-    currentEl.textContent = str;
-  }
-
-  function updateCat(ops) {
-    const idx = Math.min(ops, catStates.length - 1);
-    const next = catStates[idx];
-    if (next !== catEl.textContent) {
-      catEl.textContent = next;
-      // Shake only when getting more upset (increasing index)
-      if (idx > catStates.indexOf(catEl.textContent)) triggerShake();
-    }
-    catEl.textContent = next;
-  }
-
-  function triggerShake() {
-    catEl.classList.remove('shake');
-    void catEl.offsetWidth; // reflow to restart animation
-    catEl.classList.add('shake');
+    currentEl.classList.remove('small','xsmall');
+    const s = String(val);
+    if (s.length > 12) currentEl.classList.add('xsmall');
+    else if (s.length > 8) currentEl.classList.add('small');
+    // Prepend LRM so the bidi algorithm keeps the minus sign on the left in RTL context
+    currentEl.textContent = s.startsWith('-') ? '\u200E' + s : s;
   }
 
   function clearActiveOp() {
     document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active-op'));
   }
-
   function setActiveOp(op) {
     clearActiveOp();
-    const map = { '+': 'op-add', '-': 'op-sub', '*': 'op-mul', '/': 'op-div' };
+    const map = {'+':'op-add','-':'op-sub','*':'op-mul','/':'op-div'};
     if (map[op]) document.getElementById(map[op])?.classList.add('active-op');
   }
-
   function opSymbol(op) {
-    return { '+': '+', '-': '−', '*': '×', '/': '÷' }[op] || op;
+    return {'+':'+','-':'−','*':'×','/':'÷'}[op] || op;
   }
-
   function formatNum(n) {
-    // Avoid insane float noise
-    const s = parseFloat(n.toPrecision(12)).toString();
-    return s;
+    return parseFloat(n.toPrecision(12)).toString();
   }
-
-  function safeEval(left, op, right) {
-    switch (op) {
-      case '+': return left + right;
-      case '-': return left - right;
-      case '*': return left * right;
-      case '/': return right === 0 ? null : left / right;
+  function safeEval(l, op, r) {
+    switch(op) {
+      case '+': return l + r;
+      case '-': return l - r;
+      case '*': return l * r;
+      case '/': return r === 0 ? null : l / r;
     }
   }
 
-  // ── Button handlers ───────────────────────────────────────────────────────
-
   function handleDigit(d) {
+    clearTimeout(errorResetTimeout);
     displayEl.classList.remove('error');
     if (justEvaled) {
-      // Start fresh after =
       currentInput = d === '.' ? '0.' : d;
-      expression   = '';
-      operator     = null;
-      prevValue    = null;
-      opCount      = 0;
-      justEvaled   = false;
+      expression = ''; operator = null; prevValue = null; opCount = 0; justEvaled = false;
     } else {
       if (d === '.' && currentInput.includes('.')) return;
-      if (currentInput === '0' && d !== '.') currentInput = d;
-      else currentInput += d;
+      currentInput = (currentInput === '0' && d !== '.') ? d : currentInput + d;
     }
     clearActiveOp();
     setDisplay(currentInput);
     updateCat(opCount);
+    triggerCatAnim('bounce', 380);
   }
 
   function handleOp(op) {
+    clearTimeout(errorResetTimeout);
     displayEl.classList.remove('error');
     clearActiveOp();
     setActiveOp(op);
-
     if (prevValue !== null && operator && !justEvaled) {
-      // Chain: evaluate previous pair first
-      const result = safeEval(prevValue, operator, parseFloat(currentInput));
-      if (result === null) { showError(); return; }
-      prevValue    = result;
-      expression   = formatNum(result) + ' ' + opSymbol(op);
-      currentInput = formatNum(result);
+      const res = safeEval(prevValue, operator, parseFloat(currentInput));
+      if (res === null) { showError(); return; }
+      prevValue    = res;
+      expression   = formatNum(res) + ' ' + opSymbol(op);
+      currentInput = formatNum(res);
       opCount++;
     } else {
       prevValue  = parseFloat(currentInput);
-      expression = (justEvaled ? currentInput : currentInput) + ' ' + opSymbol(op);
+      expression = currentInput + ' ' + opSymbol(op);
       if (!justEvaled) opCount++;
     }
-
-    operator   = op;
-    justEvaled = false;
-    // Next digit press will replace currentInput
-    currentInput = '0';
+    operator = op; justEvaled = false; currentInput = '0';
     exprEl.textContent = expression;
     updateCat(opCount);
+    triggerCatAnim('bounce', 380);
   }
 
   function handleEquals() {
+    clearTimeout(errorResetTimeout);
     displayEl.classList.remove('error');
     if (operator === null || prevValue === null) return;
-
-    const right = parseFloat(currentInput);
+    const right  = parseFloat(currentInput);
     const result = safeEval(prevValue, operator, right);
-
     if (result === null) { showError(); return; }
-
-    expression   = exprEl.textContent + ' ' + currentInput + ' =';
-    exprEl.textContent = expression;
-
-    const formatted = formatNum(result);
-    currentInput = formatted;
-    prevValue    = null;
-    operator     = null;
-    justEvaled   = true;
-    opCount      = 0;     // Reset for next expression
-
-    setDisplay(formatted);
+    exprEl.textContent = exprEl.textContent + ' ' + currentInput + ' =';
+    const fmt = formatNum(result);
+    currentInput = fmt; prevValue = null; operator = null; justEvaled = true; opCount = 0;
+    setDisplay(fmt);
     clearActiveOp();
-    catEl.textContent = '😺'; // Relieved after =
-    catEl.classList.remove('shake');
+    updateCat(0, 'expr-relieved');
+    triggerCatAnim('jump', 520);
   }
 
   function handleFn(fn) {
+    clearTimeout(errorResetTimeout);
     displayEl.classList.remove('error');
     if (fn === 'ac') {
-      currentInput = '0';
-      expression   = '';
-      prevValue    = null;
-      operator     = null;
-      justEvaled   = false;
-      opCount      = 0;
-      exprEl.textContent = '';
-      setDisplay('0');
-      clearActiveOp();
-      catEl.textContent = '😸'; // Calm after clear
-      catEl.classList.remove('shake');
+      currentInput = '0'; expression = ''; prevValue = null; operator = null;
+      justEvaled = false; opCount = 0;
+      exprEl.textContent = ''; setDisplay('0'); clearActiveOp();
+      updateCat(0);
+      triggerCatAnim('bounce', 380);
       return;
     }
-
     const val = parseFloat(currentInput);
     if (isNaN(val)) return;
-
-    if (fn === 'sign') {
-      currentInput = formatNum(-val);
-    } else if (fn === 'pct') {
-      currentInput = formatNum(val / 100);
-    }
+    currentInput = fn === 'sign' ? formatNum(-val) : formatNum(val / 100);
     setDisplay(currentInput);
+    triggerCatAnim('bounce', 380);
   }
 
   function showError() {
     displayEl.classList.add('error');
     currentEl.textContent = 'Error';
-    catEl.textContent = '🙀';
-    triggerShake();
-    // Reset state
-    currentInput = '0';
-    prevValue    = null;
-    operator     = null;
-    justEvaled   = true;
-    opCount      = 0;
-    clearActiveOp();
+    currentInput = '0'; prevValue = null; operator = null;
+    justEvaled = true; opCount = 0; clearActiveOp();
+    updateCat(0, 'expr-error');
+    triggerCatAnim('shake', 420);
+    errorResetTimeout = setTimeout(() => {
+      if (opCount === 0 && justEvaled) updateCat(0);
+    }, 2200);
   }
 
-  // ── Keyboard support ──────────────────────────────────────────────────────
-
-  document.addEventListener('keydown', (e) => {
+  // Keyboard
+  document.addEventListener('keydown', e => {
     if (e.key >= '0' && e.key <= '9') { handleDigit(e.key); return; }
-    if (e.key === '.')                 { handleDigit('.'); return; }
-    if (e.key === '+')                 { handleOp('+'); return; }
-    if (e.key === '-')                 { handleOp('-'); return; }
-    if (e.key === '*')                 { handleOp('*'); return; }
-    if (e.key === '/')                 { e.preventDefault(); handleOp('/'); return; }
+    if (e.key === '.')                  { handleDigit('.'); return; }
+    if (e.key === '+')                  { handleOp('+'); return; }
+    if (e.key === '-')                  { handleOp('-'); return; }
+    if (e.key === '*')                  { handleOp('*'); return; }
+    if (e.key === '/')                  { e.preventDefault(); handleOp('/'); return; }
     if (e.key === 'Enter' || e.key === '=') { handleEquals(); return; }
-    if (e.key === 'Escape')            { handleFn('ac'); return; }
+    if (e.key === 'Escape')             { handleFn('ac'); return; }
     if (e.key === 'Backspace') {
-      if (justEvaled || currentInput.length <= 1) {
-        currentInput = '0';
-      } else {
-        currentInput = currentInput.slice(0, -1) || '0';
-      }
+      if (justEvaled || currentInput.length <= 1) currentInput = '0';
+      else currentInput = currentInput.slice(0,-1) || '0';
       setDisplay(currentInput);
+      triggerCatAnim('bounce', 380);
     }
   });
-</script>
 
+  // Init
+  updateCat(0);
+  catEl.classList.add('idle');
+</script>
 </body>
 </html>

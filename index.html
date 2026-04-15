@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1c1c1e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    .calculator {
+      width: 320px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #1c1c1e;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Cat mascot */
+    .cat-area {
+      text-align: center;
+      padding: 18px 16px 4px;
+      font-size: 48px;
+      line-height: 1;
+      transition: transform 0.15s ease;
+      user-select: none;
+    }
+
+    .cat-area.shake {
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-6px) rotate(-4deg); }
+      40%       { transform: translateX(6px) rotate(4deg); }
+      60%       { transform: translateX(-4px) rotate(-2deg); }
+      80%       { transform: translateX(4px) rotate(2deg); }
+    }
+
+    /* Display */
+    .display {
+      padding: 8px 20px 12px;
+      text-align: right;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .expression {
+      font-size: 15px;
+      color: #636366;
+      min-height: 20px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      direction: rtl;
+      margin-bottom: 2px;
+    }
+
+    .current {
+      font-size: 52px;
+      font-weight: 300;
+      color: #ffffff;
+      line-height: 1.1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      direction: rtl;
+      transition: font-size 0.1s ease;
+    }
+
+    .current.small { font-size: 36px; }
+    .current.xsmall { font-size: 26px; }
+
+    /* Buttons */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 10px 12px 20px;
+    }
+
+    button {
+      height: 68px;
+      border: none;
+      border-radius: 50%;
+      font-size: 22px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: filter 0.1s ease, transform 0.08s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      filter: brightness(1.35);
+      transform: scale(0.94);
+    }
+
+    /* Function buttons (AC, +/-, %) */
+    .btn-fn {
+      background: #2c2c2e;
+      color: #ffffff;
+    }
+
+    /* Digit buttons */
+    .btn-digit {
+      background: #3a3a3c;
+      color: #ffffff;
+    }
+
+    /* Operator buttons */
+    .btn-op {
+      background: #ff9f0a;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .btn-op.active-op {
+      background: #ffffff;
+      color: #ff9f0a;
+    }
+
+    /* Zero button spans 2 columns */
+    .btn-zero {
+      border-radius: 34px;
+      grid-column: span 2;
+      text-align: left;
+      padding-left: 26px;
+    }
+
+    /* Equals button */
+    .btn-equals {
+      background: #ff9f0a;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    /* Error flash */
+    .display.error .current {
+      color: #ff453a;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="cat-area" id="cat">😸</div>
+
+  <div class="display" id="display">
+    <div class="expression" id="expression"></div>
+    <div class="current" id="current">0</div>
+  </div>
+
+  <div class="buttons">
+    <!-- Row 1 -->
+    <button class="btn-fn"    onclick="handleFn('ac')">AC</button>
+    <button class="btn-fn"    onclick="handleFn('sign')">+/−</button>
+    <button class="btn-fn"    onclick="handleFn('pct')">%</button>
+    <button class="btn-op"    id="op-div"  onclick="handleOp('/')">÷</button>
+
+    <!-- Row 2 -->
+    <button class="btn-digit" onclick="handleDigit('7')">7</button>
+    <button class="btn-digit" onclick="handleDigit('8')">8</button>
+    <button class="btn-digit" onclick="handleDigit('9')">9</button>
+    <button class="btn-op"    id="op-mul"  onclick="handleOp('*')">×</button>
+
+    <!-- Row 3 -->
+    <button class="btn-digit" onclick="handleDigit('4')">4</button>
+    <button class="btn-digit" onclick="handleDigit('5')">5</button>
+    <button class="btn-digit" onclick="handleDigit('6')">6</button>
+    <button class="btn-op"    id="op-sub"  onclick="handleOp('-')">−</button>
+
+    <!-- Row 4 -->
+    <button class="btn-digit" onclick="handleDigit('1')">1</button>
+    <button class="btn-digit" onclick="handleDigit('2')">2</button>
+    <button class="btn-digit" onclick="handleDigit('3')">3</button>
+    <button class="btn-op"    id="op-add"  onclick="handleOp('+')">+</button>
+
+    <!-- Row 5 -->
+    <button class="btn-digit btn-zero" onclick="handleDigit('0')">0</button>
+    <button class="btn-digit" onclick="handleDigit('.')">.</button>
+    <button class="btn-equals" onclick="handleEquals()">=</button>
+  </div>
+</div>
+
+<script>
+  // State
+  let currentInput = '0';
+  let expression   = '';      // full expression string shown above display
+  let prevValue    = null;    // stored left-hand value
+  let operator     = null;    // pending operator
+  let justEvaled   = false;   // true right after pressing =
+  let opCount      = 0;       // running count of operators used in session
+
+  const catStates = ['😸', '🐱', '😾', '🙀'];
+  const catEl     = document.getElementById('cat');
+  const currentEl = document.getElementById('current');
+  const exprEl    = document.getElementById('expression');
+  const displayEl = document.getElementById('display');
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  function setDisplay(val) {
+    currentEl.classList.remove('small', 'xsmall');
+    const str = String(val);
+    if (str.length > 12) currentEl.classList.add('xsmall');
+    else if (str.length > 8) currentEl.classList.add('small');
+    currentEl.textContent = str;
+  }
+
+  function updateCat(ops) {
+    const idx = Math.min(ops, catStates.length - 1);
+    const next = catStates[idx];
+    if (next !== catEl.textContent) {
+      catEl.textContent = next;
+      // Shake only when getting more upset (increasing index)
+      if (idx > catStates.indexOf(catEl.textContent)) triggerShake();
+    }
+    catEl.textContent = next;
+  }
+
+  function triggerShake() {
+    catEl.classList.remove('shake');
+    void catEl.offsetWidth; // reflow to restart animation
+    catEl.classList.add('shake');
+  }
+
+  function clearActiveOp() {
+    document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active-op'));
+  }
+
+  function setActiveOp(op) {
+    clearActiveOp();
+    const map = { '+': 'op-add', '-': 'op-sub', '*': 'op-mul', '/': 'op-div' };
+    if (map[op]) document.getElementById(map[op])?.classList.add('active-op');
+  }
+
+  function opSymbol(op) {
+    return { '+': '+', '-': '−', '*': '×', '/': '÷' }[op] || op;
+  }
+
+  function formatNum(n) {
+    // Avoid insane float noise
+    const s = parseFloat(n.toPrecision(12)).toString();
+    return s;
+  }
+
+  function safeEval(left, op, right) {
+    switch (op) {
+      case '+': return left + right;
+      case '-': return left - right;
+      case '*': return left * right;
+      case '/': return right === 0 ? null : left / right;
+    }
+  }
+
+  // ── Button handlers ───────────────────────────────────────────────────────
+
+  function handleDigit(d) {
+    displayEl.classList.remove('error');
+    if (justEvaled) {
+      // Start fresh after =
+      currentInput = d === '.' ? '0.' : d;
+      expression   = '';
+      operator     = null;
+      prevValue    = null;
+      opCount      = 0;
+      justEvaled   = false;
+    } else {
+      if (d === '.' && currentInput.includes('.')) return;
+      if (currentInput === '0' && d !== '.') currentInput = d;
+      else currentInput += d;
+    }
+    clearActiveOp();
+    setDisplay(currentInput);
+    updateCat(opCount);
+  }
+
+  function handleOp(op) {
+    displayEl.classList.remove('error');
+    clearActiveOp();
+    setActiveOp(op);
+
+    if (prevValue !== null && operator && !justEvaled) {
+      // Chain: evaluate previous pair first
+      const result = safeEval(prevValue, operator, parseFloat(currentInput));
+      if (result === null) { showError(); return; }
+      prevValue    = result;
+      expression   = formatNum(result) + ' ' + opSymbol(op);
+      currentInput = formatNum(result);
+      opCount++;
+    } else {
+      prevValue  = parseFloat(currentInput);
+      expression = (justEvaled ? currentInput : currentInput) + ' ' + opSymbol(op);
+      if (!justEvaled) opCount++;
+    }
+
+    operator   = op;
+    justEvaled = false;
+    // Next digit press will replace currentInput
+    currentInput = '0';
+    exprEl.textContent = expression;
+    updateCat(opCount);
+  }
+
+  function handleEquals() {
+    displayEl.classList.remove('error');
+    if (operator === null || prevValue === null) return;
+
+    const right = parseFloat(currentInput);
+    const result = safeEval(prevValue, operator, right);
+
+    if (result === null) { showError(); return; }
+
+    expression   = exprEl.textContent + ' ' + currentInput + ' =';
+    exprEl.textContent = expression;
+
+    const formatted = formatNum(result);
+    currentInput = formatted;
+    prevValue    = null;
+    operator     = null;
+    justEvaled   = true;
+    opCount      = 0;     // Reset for next expression
+
+    setDisplay(formatted);
+    clearActiveOp();
+    catEl.textContent = '😺'; // Relieved after =
+    catEl.classList.remove('shake');
+  }
+
+  function handleFn(fn) {
+    displayEl.classList.remove('error');
+    if (fn === 'ac') {
+      currentInput = '0';
+      expression   = '';
+      prevValue    = null;
+      operator     = null;
+      justEvaled   = false;
+      opCount      = 0;
+      exprEl.textContent = '';
+      setDisplay('0');
+      clearActiveOp();
+      catEl.textContent = '😸'; // Calm after clear
+      catEl.classList.remove('shake');
+      return;
+    }
+
+    const val = parseFloat(currentInput);
+    if (isNaN(val)) return;
+
+    if (fn === 'sign') {
+      currentInput = formatNum(-val);
+    } else if (fn === 'pct') {
+      currentInput = formatNum(val / 100);
+    }
+    setDisplay(currentInput);
+  }
+
+  function showError() {
+    displayEl.classList.add('error');
+    currentEl.textContent = 'Error';
+    catEl.textContent = '🙀';
+    triggerShake();
+    // Reset state
+    currentInput = '0';
+    prevValue    = null;
+    operator     = null;
+    justEvaled   = true;
+    opCount      = 0;
+    clearActiveOp();
+  }
+
+  // ── Keyboard support ──────────────────────────────────────────────────────
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') { handleDigit(e.key); return; }
+    if (e.key === '.')                 { handleDigit('.'); return; }
+    if (e.key === '+')                 { handleOp('+'); return; }
+    if (e.key === '-')                 { handleOp('-'); return; }
+    if (e.key === '*')                 { handleOp('*'); return; }
+    if (e.key === '/')                 { e.preventDefault(); handleOp('/'); return; }
+    if (e.key === 'Enter' || e.key === '=') { handleEquals(); return; }
+    if (e.key === 'Escape')            { handleFn('ac'); return; }
+    if (e.key === 'Backspace') {
+      if (justEvaled || currentInput.length <= 1) {
+        currentInput = '0';
+      } else {
+        currentInput = currentInput.slice(0, -1) || '0';
+      }
+      setDisplay(currentInput);
+    }
+  });
+</script>
+
+</body>
+</html>
